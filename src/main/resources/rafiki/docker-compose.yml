@@ -1,0 +1,111 @@
+name: "rafiki-test"
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_DB: "postgres"
+    networks: [rafiki]
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    networks: [rafiki]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  tigerbeetle:
+    image: ghcr.io/tigerbeetle/tigerbeetle:0.16.29
+    privileged: true
+    volumes:
+      - tigerbeetle-data:/var/lib/tigerbeetle
+    networks:
+      rafiki:
+        ipv4_address: 10.5.0.50
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -ex
+        DATA_FILE=/var/lib/tigerbeetle/cluster_0_replica_0.tigerbeetle
+        set +e
+        ls $$DATA_FILE
+        DATA_FILE_EXISTS="$$?"
+        set -e
+        echo $$DATA_FILE_EXISTS
+        if [ "$$DATA_FILE_EXISTS" != 0 ]; then
+          ./tigerbeetle format --cluster=0 --replica=0 --replica-count=1 $$DATA_FILE
+        fi
+        hostname -i
+        ls /var/lib/tigerbeetle
+        ./tigerbeetle start --addresses=0.0.0.0:4342 --development $$DATA_FILE
+
+  # rafiki-auth and rafiki-frontend are disabled for testcontainers
+  # They require Kratos identity server which is complex to setup
+  # For full production setup, see https://rafiki.dev/integration/deployment/docker-compose/
+
+  rafiki-backend:
+    image: ghcr.io/interledger/rafiki-backend:latest
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      tigerbeetle:
+        condition: service_started
+    environment:
+      NODE_ENV: "development"
+      LOG_LEVEL: "debug"
+      INSTANCE_NAME: "Test Rafiki"
+      TRUST_PROXY: "false"
+      ADMIN_PORT: "3001"
+      CONNECTOR_PORT: "3002"
+      OPEN_PAYMENTS_PORT: "3000"
+      DATABASE_URL: "postgresql://postgres:password@postgres:5432/backenddb?sslmode=disable"
+      USE_TIGERBEETLE: "true"
+      TIGERBEETLE_CLUSTER_ID: "0"
+      TIGERBEETLE_REPLICA_ADDRESSES: "10.5.0.50:4342"
+      # Auth URLs are required even though auth service is not running
+      AUTH_SERVER_GRANT_URL: "http://localhost:9999/auth"
+      AUTH_SERVER_INTROSPECTION_URL: "http://localhost:9999/auth/introspection"
+      AUTH_SERVICE_API_URL: "http://localhost:9999/auth/api"
+      ILP_ADDRESS: "test.rafiki"
+      STREAM_SECRET: "BjPXtnd00G2mRQwP/8ZpwyZASOch5sUXT5o0iR5b5wU="
+      ADMIN_API_SECRET: "test-admin-api-secret"
+      OPEN_PAYMENTS_URL: "http://rafiki-backend:3000"
+      WEBHOOK_URL: "http://host.docker.internal:9999/webhooks"
+      EXCHANGE_RATES_URL: "http://host.docker.internal:9999/rates"
+      REDIS_URL: "redis://redis:6379/1"
+      WALLET_ADDRESS_URL: "http://rafiki-backend:3000/.well-known/pay"
+      ILP_CONNECTOR_URL: "http://rafiki-backend:3002"
+      KEY_ID: "test-key-id"
+    networks: [rafiki]
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+      - "3002:3002"
+    privileged: true
+
+networks:
+  rafiki:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.0.0/24
+          gateway: 10.5.0.1
+
+volumes:
+  pg-data:
+  tigerbeetle-data:
