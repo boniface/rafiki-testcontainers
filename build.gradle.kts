@@ -2,7 +2,7 @@ plugins {
     java
     `maven-publish`
     signing
-    id("net.thebugmc.gradle.sonatype-central-portal-publisher") version "1.2.4"
+    id("io.github.gradle-nexus.publish-plugin") version "2.0.0"
     id("io.github.sgtsilvio.gradle.metadata") version "0.6.0"
 }
 
@@ -103,4 +103,15 @@ signing {
     val signingPassword: String? by project
     useInMemoryPgpKeys(signingKey, signingPassword)
     sign(publishing.publications)
+}
+
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+            username.set(project.findProperty("sonatypeUsername") as String? ?: System.getenv("SONATYPE_USERNAME"))
+            password.set(project.findProperty("sonatypePassword") as String? ?: System.getenv("SONATYPE_PASSWORD"))
+        }
+    }
 }
