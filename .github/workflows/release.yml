@@ -27,10 +27,12 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK 25
         uses: actions/setup-java@v4
@@ -46,6 +48,11 @@ jobs:
 
       - name: Publish artifacts
         run: ./gradlew publish --stacktrace
+
+      - name: Create GitHub Release
+        env:
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew jreleaserRelease --stacktrace
 
       - name: Deploy to Maven Central
         env:

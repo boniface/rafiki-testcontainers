@@ -122,6 +122,36 @@ jreleaser {
         copyright.set("2025 Boniface Kabaso")
     }
 
+    release {
+        github {
+            repoOwner.set("hashcode-zm")
+            name.set("rafiki-testcontainers")
+            tagName.set("{{projectVersion}}")
+            releaseName.set("Release {{projectVersion}}")
+            overwrite.set(false)
+            update {
+                enabled.set(true)
+            }
+            changelog {
+                enabled.set(true)
+                formatted.set(Active.ALWAYS)
+                preset.set("conventional-commits")
+                contributors {
+                    enabled.set(true)
+                }
+                append {
+                    enabled.set(true)
+                    target.set(file("CHANGELOG.md"))
+                    content.set("""
+                        ## [{{projectVersion}}] - {{releaseDate}}
+                        {{changelogChanges}}
+                        {{changelogContributors}}
+                    """.trimIndent())
+                }
+            }
+        }
+    }
+
     signing {
         active = Active.ALWAYS
         armored = true
