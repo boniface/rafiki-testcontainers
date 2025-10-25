@@ -53,17 +53,17 @@ tasks.test {
 
 metadata {
     readableName = "Rafiki Testcontainers"
-    description = "Reusable Testcontainers wrapper for Rafiki docker-compose (auth enabled)."
+    description = "Testcontainers wrapper for Rafiki - Interledger open payments backend for integration testing"
     license { apache2() }
     developers {
-        register("kabaso") {
-            fullName.set("Kabaso")
-            email.set("maintainers@hashcode.zm")
+        register("boniface") {
+            fullName.set("Boniface Kabaso")
+            email.set("550236+boniface@users.noreply.github.com")
         }
     }
     github {
         org.set("hashcode-zm")
-        //repository.set("rafiki-testcontainers")
+        repo.set("rafiki-testcontainers")
     }
 }
 
@@ -73,7 +73,7 @@ publishing {
             from(components["java"])
             pom {
                 name.set("Rafiki Testcontainers")
-                description.set("Reusable Testcontainers wrapper for Rafiki docker-compose (auth enabled).")
+                description.set("Testcontainers wrapper for Rafiki - Interledger open payments backend for integration testing")
                 url.set("https://github.com/hashcode-zm/rafiki-testcontainers")
                 licenses {
                     license {
@@ -88,9 +88,9 @@ publishing {
                 }
                 developers {
                     developer {
-                        id.set("kabaso")
-                        name.set("Kabaso")
-                        email.set("maintainers@hashcode.zm")
+                        id.set("boniface")
+                        name.set("Boniface Kabaso")
+                        email.set("550236+boniface@users.noreply.github.com")
                     }
                 }
             }

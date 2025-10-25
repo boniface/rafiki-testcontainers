@@ -4,10 +4,10 @@ A reusable [Testcontainers](https://www.testcontainers.org/) wrapper for [Rafiki
 
 ## Features
 
-- 🐳 **Automated Docker Setup** - Starts Rafiki backend with all dependencies (PostgreSQL, Redis, TigerBeetle)
-- ⚡ **Fast Integration Tests** - Reusable container instances for testing
-- 🧹 **Automatic Cleanup** - Containers are automatically removed after tests
-- 🎯 **Simple API** - Easy-to-use wrapper around Rafiki's docker-compose
+- **Automated Docker Setup** - Starts Rafiki backend with all dependencies (PostgreSQL, Redis, TigerBeetle)
+- **Fast Integration Tests** - Reusable container instances for testing
+- **Automatic Cleanup** - Containers are automatically removed after tests
+- **Simple API** - Easy-to-use wrapper around Rafiki's docker-compose
 
 ## Requirements
 
@@ -21,7 +21,7 @@ Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    testImplementation("zm.hashcode:rafiki-testcontainers:1.0.0")
+    testImplementation("zm.hashcode:rafiki-testcontainers:0.1.0")
 }
 ```
 
@@ -31,7 +31,7 @@ Or for Maven (`pom.xml`):
 <dependency>
     <groupId>zm.hashcode</groupId>
     <artifactId>rafiki-testcontainers</artifactId>
-    <version>1.0.0</version>
+    <version>0.1.0</version>
     <scope>test</scope>
 </dependency>
 ```
