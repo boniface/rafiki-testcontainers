@@ -1,6 +1,7 @@
 plugins {
     java
-    id("com.vanniktech.maven.publish") version "0.30.0"
+    `maven-publish`
+    id("org.jreleaser") version "1.14.0"
     id("io.github.sgtsilvio.gradle.metadata") version "0.6.0"
 }
 
@@ -65,36 +66,67 @@ metadata {
     }
 }
 
-mavenPublishing {
-    publishToMavenCentral(com.vanniktech.maven.publish.SonatypeHost.CENTRAL_PORTAL)
-    signAllPublications()
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "zm.hashcode"
+            artifactId = "rafiki-testcontainers"
+            version = "0.1.0"
 
-    coordinates("zm.hashcode", "rafiki-testcontainers", "0.1.0")
+            from(components["java"])
 
-    pom {
-        name.set("Rafiki Testcontainers")
-        description.set("Testcontainers wrapper for Rafiki - Interledger open payments backend for integration testing")
-        url.set("https://github.com/hashcode-zm/rafiki-testcontainers")
+            pom {
+                name.set("Rafiki Testcontainers")
+                description.set("Testcontainers wrapper for Rafiki - Interledger open payments backend for integration testing")
+                url.set("https://github.com/hashcode-zm/rafiki-testcontainers")
+                inceptionYear.set("2025")
 
-        licenses {
-            license {
-                name.set("Apache-2.0")
-                url.set("https://www.apache.org/licenses/LICENSE-2.0")
+                licenses {
+                    license {
+                        name.set("Apache-2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0")
+                    }
+                }
+
+                developers {
+                    developer {
+                        id.set("boniface")
+                        name.set("Boniface Kabaso")
+                        email.set("550236+boniface@users.noreply.github.com")
+                    }
+                }
+
+                scm {
+                    url.set("https://github.com/hashcode-zm/rafiki-testcontainers")
+                    connection.set("scm:git:https://github.com/hashcode-zm/rafiki-testcontainers.git")
+                    developerConnection.set("scm:git:ssh://git@github.com/hashcode-zm/rafiki-testcontainers.git")
+                }
             }
         }
+    }
 
-        developers {
-            developer {
-                id.set("boniface")
-                name.set("Boniface Kabaso")
-                email.set("550236+boniface@users.noreply.github.com")
-            }
+    repositories {
+        maven {
+            url = uri(layout.buildDirectory.dir("staging-deploy"))
         }
+    }
+}
 
-        scm {
-            url.set("https://github.com/hashcode-zm/rafiki-testcontainers")
-            connection.set("scm:git:git://github.com/hashcode-zm/rafiki-testcontainers.git")
-            developerConnection.set("scm:git:ssh://git@github.com:hashcode-zm/rafiki-testcontainers.git")
+jreleaser {
+    signing {
+        active.set(org.jreleaser.model.Active.ALWAYS)
+        armored.set(true)
+    }
+
+    deploy {
+        maven {
+            mavenCentral {
+                create("sonatype") {
+                    active.set(org.jreleaser.model.Active.ALWAYS)
+                    url.set("https://central.sonatype.com/api/v1/publisher")
+                    stagingRepository(layout.buildDirectory.dir("staging-deploy").get().toString())
+                }
+            }
         }
     }
 }
