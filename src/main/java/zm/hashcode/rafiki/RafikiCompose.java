@@ -68,8 +68,7 @@ public class RafikiCompose implements AutoCloseable {
                         "docker-compose.yml not found in classpath"
                 ).getFile())
         )
-                .withLocalCompose(true)  // Use local docker-compose for better compatibility
-                // Wait only for backend services - auth and frontend require additional Kratos setup
+                .withLocalCompose(true)
                 .withExposedService("rafiki-backend-1", 3000,
                     Wait.forListeningPort().withStartupTimeout(Duration.ofMinutes(3)))
                 .withExposedService("rafiki-backend-1", 3001,
@@ -168,7 +167,6 @@ public class RafikiCompose implements AutoCloseable {
             int mappedPort = compose.getServicePort(serviceName, port);
             return "http://localhost:" + mappedPort;
         } catch (IllegalStateException e) {
-            // Container not started yet, return placeholder
             return "http://localhost:" + port + " (not started)";
         }
     }

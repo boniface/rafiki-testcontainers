@@ -1,3 +1,5 @@
+import org.jreleaser.model.Active
+
 plugins {
     java
     `maven-publish`
@@ -21,7 +23,6 @@ repositories {
 }
 
 dependencies {
-    // JUnit 5 (Jupiter)
     testImplementation(platform("org.junit:junit-bom:5.11.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -29,10 +30,8 @@ dependencies {
     implementation(platform("org.testcontainers:testcontainers-bom:1.20.3"))
     implementation("org.testcontainers:testcontainers")
 
-    // SLF4J implementation for logging
     testImplementation("org.slf4j:slf4j-simple:2.0.9")
 
-    // Apache Commons dependencies
     implementation("org.apache.commons:commons-compress:1.26.0")
     implementation("commons-codec:commons-codec:1.16.0")
 }
@@ -40,7 +39,6 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 
-    // Show test output in console
     testLogging {
         events("passed", "skipped", "failed", "standardOut", "standardError")
         showExceptions = true
@@ -125,16 +123,16 @@ jreleaser {
     }
 
     signing {
-        active.set(org.jreleaser.model.Active.ALWAYS)
-        armored.set(true)
+        active = Active.ALWAYS
+        armored = true
     }
 
     deploy {
         maven {
             mavenCentral {
                 create("sonatype") {
-                    active.set(org.jreleaser.model.Active.ALWAYS)
-                    url.set("https://central.sonatype.com/api/v1/publisher")
+                    active = Active.ALWAYS
+                    url = "https://central.sonatype.com/api/v1/publisher"
                     stagingRepository(layout.buildDirectory.dir("staging-deploy").get().toString())
                 }
             }

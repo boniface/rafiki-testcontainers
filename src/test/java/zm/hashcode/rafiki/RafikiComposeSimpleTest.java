@@ -12,7 +12,7 @@ public class RafikiComposeSimpleTest {
         RafikiCompose compose = new RafikiCompose();
         assertNotNull(compose, "RafikiCompose should be instantiated");
 
-        // URLs should return placeholders when not started
+
         String adminUrl = compose.backendAdminUrl();
         assertNotNull(adminUrl);
         assertTrue(adminUrl.contains("not started") || adminUrl.contains("localhost"));
