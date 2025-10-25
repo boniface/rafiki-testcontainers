@@ -113,6 +113,17 @@ publishing {
 }
 
 jreleaser {
+    project {
+        description.set("Testcontainers wrapper for Rafiki - Interledger open payments backend for integration testing")
+        authors.set(listOf("Boniface Kabaso"))
+        license.set("Apache-2.0")
+        links {
+            homepage.set("https://github.com/hashcode-zm/rafiki-testcontainers")
+        }
+        inceptionYear.set("2025")
+        copyright.set("2025 Boniface Kabaso")
+    }
+
     signing {
         active.set(org.jreleaser.model.Active.ALWAYS)
         armored.set(true)
