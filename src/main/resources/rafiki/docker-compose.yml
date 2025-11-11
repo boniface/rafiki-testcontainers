@@ -11,6 +11,8 @@ services:
     volumes:
       - pg-data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - '5432:5432'
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -93,10 +95,131 @@ services:
       KEY_ID: "test-key-id"
     networks: [rafiki]
     ports:
-      - "3000:3000"
-      - "3001:3001"
+#      - "3000:3000"
+#      - "3001:3001"
       - "3002:3002"
     privileged: true
+
+  cloud-nine-mock-ase:
+    image: ditkay/rafiki-mock-ase:latest
+    restart: always
+    networks:
+      - rafiki
+    ports:
+      - '3030:80'
+    environment:
+      LOG_LEVEL: debug
+      PORT: 80
+      SEED_FILE_LOCATION: /workspace/seed.yml
+      KEY_FILE: /workspace/private-key.pem
+      OPEN_PAYMENTS_URL: ${CLOUD_NINE_OPEN_PAYMENTS_URL:-https://cloud-nine-wallet-backend}
+      AUTH_SERVER_DOMAIN: ${CLOUD_NINE_AUTH_SERVER_DOMAIN:-http://localhost:3006}
+      TESTNET_AUTOPEER_URL: ${TESTNET_AUTOPEER_URL}
+      GRAPHQL_URL: http://cloud-nine-wallet-backend:3001/graphql
+      SIGNATURE_VERSION: 1
+      SIGNATURE_SECRET: iyIgCprjb9uL8wFckR+pLEkJWMB7FJhgkvqhTQR/964=
+      IDP_SECRET: 2pEcn2kkCclbOHQiGNEwhJ0rucATZhrA807HTm2rNXE=
+      DISPLAY_NAME: Cloud Nine Wallet
+      DISPLAY_ICON: wallet-icon.svg
+      OPERATOR_TENANT_ID: 438fa74a-fa7d-4317-9ced-dde32ece1787
+      FRONTEND_PORT: 3010
+    volumes:
+      - ../../cloud-nine-wallet/seed.yml:/workspace/seed.yml
+      - ../../cloud-nine-wallet/private-key.pem:/workspace/private-key.pem
+#    depends_on:
+#      cloud-nine-backend:
+#        condition: service_healthy
+
+  cloud-nine-backend:
+    hostname: cloud-nine-wallet-backend
+    image: ditkay/rafiki-backend-mock:latest
+#    volumes:
+#      - type: bind
+#        source: ../../packages/backend/src
+#        target: /home/rafiki/packages/backend/src
+#        read_only: true
+    restart: always
+    privileged: true
+    ports:
+      - '3000:80'
+      - '3001:3001'
+      - '3002:3002'
+      - "9229:9229"
+    networks:
+      - rafiki
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      INSTANCE_NAME: CLOUD-NINE
+      TRUST_PROXY: ${TRUST_PROXY}
+      LOG_LEVEL: debug
+      ADMIN_PORT: 3001
+      CONNECTOR_PORT: 3002
+      OPEN_PAYMENTS_PORT: 80
+      DATABASE_URL: "postgresql://postgres:password@postgres:5432/backenddb?sslmode=disable"
+      USE_TIGERBEETLE: ${USE_TIGERBEETLE-false}
+      TIGERBEETLE_CLUSTER_ID: ${TIGERBEETLE_CLUSTER_ID-0}
+      TIGERBEETLE_REPLICA_ADDRESSES: ${TIGERBEETLE_REPLICA_ADDRESSES-''}
+      AUTH_SERVER_GRANT_URL: ${CLOUD_NINE_AUTH_SERVER_DOMAIN:-http://cloud-nine-wallet-auth:3006}
+      AUTH_SERVER_INTROSPECTION_URL: http://cloud-nine-wallet-auth:3007
+      AUTH_SERVICE_API_URL: 'http://cloud-nine-wallet-auth:3011'
+      ILP_ADDRESS: ${ILP_ADDRESS:-test.cloud-nine-wallet}
+      STREAM_SECRET: BjPXtnd00G2mRQwP/8ZpwyZASOch5sUXT5o0iR5b5wU=
+      ADMIN_API_SECRET: iyIgCprjb9uL8wFckR+pLEkJWMB7FJhgkvqhTQR/964=
+      OPEN_PAYMENTS_URL: ${CLOUD_NINE_OPEN_PAYMENTS_URL:-https://cloud-nine-wallet-backend}
+      WEBHOOK_URL: http://cloud-nine-wallet/webhooks
+      EXCHANGE_RATES_URL: http://cloud-nine-wallet/rates
+      REDIS_URL: redis://redis:6379/0
+      WALLET_ADDRESS_URL: ${CLOUD_NINE_WALLET_ADDRESS_URL:-https://cloud-nine-wallet-backend/.well-known/pay}
+      ILP_CONNECTOR_URL: ${CLOUD_NINE_CONNECTOR_URL:-http://cloud-nine-wallet-backend:3002}
+      ENABLE_TELEMETRY: true
+      KEY_ID: 7097F83B-CB84-469E-96C6-2141C72E22C0
+      OPERATOR_TENANT_ID: 438fa74a-fa7d-4317-9ced-dde32ece1787
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "http://localhost:3001/healthz" ]
+      start_period: 60s
+      start_interval: 5s
+      interval: 30s
+      retries: 1
+      timeout: 3s
+
+  cloud-nine-auth:
+    image:  ditkay/rafiki-auth-test:latest
+    volumes:
+      - type: bind
+        source: ../../packages/auth/src
+        target: /home/rafiki/packages/auth/src
+        read_only: true
+    restart: always
+    networks:
+      - rafiki
+    ports:
+      - '3003:3003'
+      - '3006:3006'
+      - "9230:9229"
+      - '3009:3009'
+      - '3011:3011'
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      TRUST_PROXY: ${TRUST_PROXY}
+      AUTH_DATABASE_URL:  "postgresql://postgres:password@postgres:5432/backenddb?sslmode=disable"
+      AUTH_SERVER_URL: ${CLOUD_NINE_AUTH_SERVER_DOMAIN:-http://localhost:3006}
+      REDIS_URL: redis://shared-redis:6379/1
+      IDENTITY_SERVER_URL: http://localhost:3030/mock-idp/
+      IDENTITY_SERVER_SECRET: 2pEcn2kkCclbOHQiGNEwhJ0rucATZhrA807HTm2rNXE=
+      COOKIE_KEY: 42397d1f371dd4b8b7d0308a689a57c882effd4ea909d792302542af47e2cd37
+      ADMIN_API_SECRET: iyIgCprjb9uL8wFckR+pLEkJWMB7FJhgkvqhTQR/964=
+      OPERATOR_TENANT_ID: 438fa74a-fa7d-4317-9ced-dde32ece1787
+      SERVICE_API_PORT: 3011
+    depends_on:
+      - postgres
+      - redis
+
+volumes:
+  pg-data:
+  tigerbeetle-data:
 
 networks:
   rafiki:
@@ -106,6 +229,4 @@ networks:
         - subnet: 10.5.0.0/24
           gateway: 10.5.0.1
 
-volumes:
-  pg-data:
-  tigerbeetle-data:
+
